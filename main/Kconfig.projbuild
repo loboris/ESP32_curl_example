@@ -1,0 +1,47 @@
+menu "Curl Example Configuration"
+
+config WIFI_SSID
+    string "WiFi SSID"
+    default "myssid"
+    help
+	SSID (network name) for the example to connect to.
+
+config WIFI_PASSWORD
+    string "WiFi Password"
+    default "mypassword"
+    help
+	WiFi password (WPA or WPA2) for the example to use.
+
+config MAIL_SERVER
+    string "Mail server"
+    default "smtp.gmail.com"
+    help
+	Mail server address.
+
+config MAIL_SERVER_PORT
+    int "Mail server port"
+    default 465
+    range 1 65535
+    help
+	Mail server port.
+
+config MAIL_USER
+    string "Mail server user login name"
+    default "myLoginName@gmail.com"
+    help
+	Mail server login user name.
+
+config MAIL_PASSWORD
+    string "Mail server user login password"
+    default "myGmaipPassword"
+    help
+	Mail server login user password.
+
+config MAIL_RECIPIENT
+    string "Mail recipient's email address"
+    default "sendTo@gmail.com"
+    help
+	Mail recipient's email address.
+
+
+endmenu
