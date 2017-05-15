@@ -51,13 +51,14 @@ static char mail_msg[] = "Hi from my ESP32\r\nThis is mail message with some att
 static char mail_attach[] = "This is a <b>test</b> e-mail.<br/>\nThis mail was sent using <u>libquickmail</u> from ESP32.";
 // ========================================================================================================================
 
-// ===================================================================================
+// ===================================================================================================
 // Those are real URL's which can be used for testing
 static char Get_testURL[] = "http://loboris.eu/ESP32/test.php?par1=765&par2=test";
 static char Get_file_testURL[] = "http://loboris.eu/ESP32/tiger.bmp";
 static char Get_bigfile_testURL[] = "http://loboris.eu/ESP32/bigimg.jpg";
 
 static char Get_testURL_SSL[] = "https://www-eng-x.llnl.gov/documents/a_document.txt";
+//static char Get_testURL_SSL[] = "https://google.com";
 
 static char Post_testURL[] = "http://loboris.eu/ESP32/test.php";
 
@@ -67,7 +68,12 @@ static char Ftp_gettext_testURL[] = "ftp://loboris.eu/ftptest.txt";
 static char Ftp_getfile_testURL[] = "ftp://loboris.eu/tiger240.jpg";
 static char Ftp_putfile_testURL[] = "ftp://loboris.eu/put_test.jpg";
 static char Ftp_puttextfile_testURL[] = "ftp://loboris.eu/put_test.txt";
-// ===================================================================================
+
+static char SFtp_pass[] = "password";
+static char SFtp_pass2[] = "demo-user";
+static char SFtp_getfile_testURL[] = "sftp://demo@test.rebex.net:22/readme.txt";
+static char SFtp_putfile_testURL[] = "sftp://demo-user@demo.wftpserver.com:2222/upload/esp32test.jpg";
+// ===================================================================================================
 
 
 static uint8_t print_header = 0;
@@ -339,7 +345,7 @@ static void testFTP()
     }
     else {
 		printf("\r\n\r\n#### FTP PUT TEXT FILE\r\n");
-	    printf("     Upload text file FTP server, simulate reading from file system\r\n");
+	    printf("     Upload text file to FTP server, simulate reading from file system\r\n");
 
 		res = Curl_FTP(1, Ftp_puttextfile_testURL, Ftp_user_pass, SIMULATE_FS, hdrbuf, bodybuf, 1024, 4096);
     }
@@ -351,8 +357,57 @@ exit:
     vTaskDelay(1000 / portTICK_RATE_MS);
 }
 
+//--------------------
+static void testSFTP()
+{
+	int exists, res;
+
+    char *hdrbuf = calloc(1024, 1);
+    assert(hdrbuf);
+    char *bodybuf = calloc(4096, 1);
+    assert(bodybuf);
+
+    printf("\r\n\r\n#### SFTP DOWNLOAD TEXT FILE\r\n");
+    printf("     Download small text file from SFTP (SSH) server\r\n");
+
+    res = Curl_SFTP(0, SFtp_getfile_testURL, SFtp_pass, NULL, hdrbuf, bodybuf, 1024, 4096);
+	print_response(hdrbuf, bodybuf,res);
+	if (res == ESP_OK) {
+		// Save the text file to fs, we will use it as POST parameter
+		exists = check_file("/spiflash/sftptest.txt");
+		if (exists == 0) {
+			FILE * fd =fopen("/spiflash/sftptest.txt", "wb");
+			if (fd) {
+				fwrite(bodybuf, 1, strlen(bodybuf), fd);
+				fclose(fd);
+				printf("     Received file saved to '/spiflash/sftptest.txt' file\r\n");
+			}
+		}
+	}
+    vTaskDelay(2000 / portTICK_RATE_MS);
+
+	exists = check_file("/spiflash/tiger.jpg");
+    if (exists == 1) {
+		printf("\r\n\r\n#### SFTP UPLOAD JPG FILE\r\n");
+	    printf("     Upload JPG file to SFTP (SSH) server\r\n");
+
+		res = Curl_SFTP(1, SFtp_putfile_testURL, SFtp_pass2, "/spiflash/tiger.jpg", hdrbuf, bodybuf, 1024, 4096);
+    }
+    else {
+		printf("\r\n\r\n#### SFTP UPLOAD TEXT FILE\r\n");
+	    printf("     Upload text file to SFTP (SSH) server, simulate reading from file system\r\n");
+
+		res = Curl_SFTP(1, SFtp_putfile_testURL, SFtp_pass2, SIMULATE_FS, hdrbuf, bodybuf, 1024, 4096);
+    }
+	print_response(hdrbuf, bodybuf,res);
+
+    free(bodybuf);
+    free(hdrbuf);
+    vTaskDelay(1000 / portTICK_RATE_MS);
+}
+
 //------------------------------------
-static void testSNTP(uint8_t dosend) {
+static void testSMTP(uint8_t dosend) {
 	quickmail_progress = curl_progress;
 
 	printf("\r\n\r\n#### SMTP: SEND MAIL\r\n");
@@ -409,6 +464,7 @@ static void testSNTP(uint8_t dosend) {
 	quickmail_cleanup();
 }
 
+
 //--------------------------
 static void delete_files() {
 	int exists, ret;
@@ -428,6 +484,11 @@ static void delete_files() {
 	if (exists == 1) {
 		ret = remove("/spiflash/tiger.jpg");
 		if (ret == 0) printf("* removed \"/spiflash/tiger.jpg\"\r\n");
+	}
+	exists = check_file("/spiflash/sftptest.txt");
+	if (exists == 1) {
+		ret = remove("/spiflash/sftptest.txt");
+		if (ret == 0) printf("* removed \"/spiflash/sftptest.txt\"\r\n");
 	}
 
 }
@@ -466,6 +527,7 @@ static void set_reset_cnt() {
         nvs_close(my_handle);
     }
 }
+
 //=============================
 void testCurl(void *taskData) {
 
@@ -511,10 +573,13 @@ void testCurl(void *taskData) {
 		testFTP();
 		if (num_errors > 5) break;
 
-		testSNTP(sendmail);
+		testSFTP();
 		if (num_errors > 5) break;
 
-	    int nwait = 30;
+		testSMTP(sendmail);
+		if (num_errors > 5) break;
+
+	    int nwait = 60;
 	    printf("\r\n");
 	    while (nwait > 0) {
 	    	printf("Waiting %d seconds...   \r", nwait);

@@ -386,8 +386,8 @@ exit:
 }
 
 
-//===================================================================================================================
-int Curl_FTP(uint8_t upload, char *url, char *user_pass, char *fname, char *hdr, char *body, int hdrlen, int bodylen)
+//=========================================================================================================================================
+static int _Curl_FTP(uint8_t upload, char *url, char *user_pass, char *fname, char *hdr, char *body, int hdrlen, int bodylen, uint8_t sftp)
 {
 	CURL *curl = NULL;
 	CURLcode res = 0;
@@ -464,14 +464,20 @@ int Curl_FTP(uint8_t upload, char *url, char *user_pass, char *fname, char *hdr,
 
     _set_default_options(curl);
 
-    /// build a list of commands to pass to libcurl
-    //headerlist = curl_slist_append(headerlist, "QUIT");
-
-    curl_easy_setopt(curl, CURLOPT_URL, (char *)url);
-	_set_default_options(curl);
-
 	// set authentication credentials
-    curl_easy_setopt(curl, CURLOPT_USERPWD, user_pass);
+    if (sftp) {
+    	curl_easy_setopt(curl, CURLOPT_PASSWORD, user_pass);
+        curl_easy_setopt(curl, CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_PASSWORD);
+    }
+    else {
+        /// build a list of commands to pass to libcurl
+        //headerlist = curl_slist_append(headerlist, "QUIT");
+    	curl_easy_setopt(curl, CURLOPT_USERPWD, user_pass);
+
+    	//curl_easy_setopt(curl, CURLOPT_POSTQUOTE, headerlist);
+    	curl_easy_setopt(curl, CURLOPT_FTP_USE_EPSV, 0L);
+    	curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_TRY);
+    }
 
     curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curlWrite);
     curl_easy_setopt(curl, CURLOPT_HEADERDATA, &get_header);
@@ -489,9 +495,6 @@ int Curl_FTP(uint8_t upload, char *url, char *user_pass, char *fname, char *hdr,
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWrite);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &get_data);
     }
-	//curl_easy_setopt(curl, CURLOPT_POSTQUOTE, headerlist);
-	curl_easy_setopt(curl, CURLOPT_FTP_USE_EPSV, 0L);
-	curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_TRY);
 
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long)curl_timeout);
 
@@ -532,6 +535,18 @@ exit:
     if (curl) curl_easy_cleanup(curl);
 
     return err;
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+int Curl_FTP(uint8_t upload, char *url, char *user_pass, char *fname, char *hdr, char *body, int hdrlen, int bodylen)
+{
+	return _Curl_FTP(upload, url, user_pass, fname, hdr, body, hdrlen, bodylen, 0);
+}
+
+//---------------------------------------------------------------------------------------------------------------
+int Curl_SFTP(uint8_t upload, char *url, char *pass, char *fname, char *hdr, char *body, int hdrlen, int bodylen)
+{
+	return _Curl_FTP(upload, url, pass, fname, hdr, body, hdrlen, bodylen, 1);
 }
 
 //-------------------

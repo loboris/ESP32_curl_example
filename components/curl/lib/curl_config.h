@@ -407,9 +407,11 @@
 
 /* Define to 1 if you have the `ssh2' library (-lssh2). */
 /* #undef HAVE_LIBSSH2 */
+#define HAVE_LIBSSH2
 
 /* Define to 1 if you have the <libssh2.h> header file. */
 /* #undef HAVE_LIBSSH2_H */
+#define HAVE_LIBSSH2_H
 
 /* Define to 1 if you have the `ssl' library (-lssl). */
 //#define HAVE_LIBSSL 1
@@ -692,7 +694,7 @@
 #define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <sys/uio.h> header file. */
-#define HAVE_SYS_UIO_H 1
+//#define HAVE_SYS_UIO_H 1
 
 /* Define to 1 if you have the <sys/un.h> header file. */
 //#define HAVE_SYS_UN_H 1
@@ -936,6 +938,7 @@
 
 /* if libSSH2 is in use */
 /* #undef USE_LIBSSH2 */
+#define USE_LIBSSH2
 
 /* If you want to build curl with the built-in manual */
 ///#define USE_MANUAL 1

@@ -35,18 +35,20 @@ Make and flash the example.
 #### Example functions
 
 * print info about used **libcurl** version and supported features
-* test http GET method; sends some parameters and gets response
+* test **http** GET method; sends some parameters and gets response
 * test http GET method; requests file and saves the file to file system
 * test http GET method; requests large file (~2.4 MB), simulates saving the file to file system
-* test https GET method; connects to https server using SSL, get the response
+* test **https** GET method; connects to https server using SSL, get the response
 * test http POST method; sends 4 parameters including 1 file; gets the response
-* test ftp LIST directory
+* test **ftp** LIST directory
 * test ftp GET text file; saves the file to the filesystem
 * test ftp GET binary file (JPG) to file system
 * test ftp PUT binary file from file system (uploads previously downloaded file under different name)
-* test SNTP; sends email with attachment (attaches the jpg file downloaded from ftp server)
+* test **sftp** DOWNLOAD text file from **ssh** server; saves the file to the filesystem
+* test sftp UPLOAD jpg file to **ssh** server
+* test **SMTP**; sends email with attachment (attaches the jpg file downloaded from ftp server)
 
-The sequence of operation is repeated after 30 second waiting.
+The sequence of operation is repeated after 60 second waiting.
 
 If more than 5 consecutive errors are detected, the system is reseted.
 
@@ -124,6 +126,8 @@ Protocols:
 - pop3
 - pop3s
 - rtsp
+- scp
+- sftp
 - smtp
 - smtps
 - telnet
@@ -313,6 +317,36 @@ Uploaded file /spiflash/tiger.jpg, size=97543
 ^^^^^^^^^^^^ Response BODY: ^^^^^^^^^^^^
 
 
+#### SFTP DOWNLOAD TEXT FILE
+     Download small text file from SFTP (SSH) server
+
+____________ Response BODY: ____________
+Welcome,
+
+you are connected to an FTP or SFTP server used for testing purposes by Rebex FTP/SSL or Rebex SFTP sample code.
+Only read access is allowed and the FTP download speed is limited to 16KBps.
+
+For infomation about Rebex FTP/SSL, Rebex SFTP and other Rebex .NET components, please visit our website at http://www.rebex.net/
+
+For feedback and support, contact support@rebex.net
+
+Thanks!
+
+^^^^^^^^^^^^ Response BODY: ^^^^^^^^^^^^
+     Received file saved to '/spiflash/sftptest.txt' file
+
+
+#### SFTP UPLOAD JPG FILE
+     Upload JPG file to SFTP (SSH) server
+* Upload: sent 4096
+* Upload: sent 86016
+* Upload: sent 97543 B; time=11.9 s; speed=8.0 KB/sec
+
+____________ Response BODY: ____________
+Uploaded file /spiflash/tiger.jpg, size=97543
+^^^^^^^^^^^^ Response BODY: ^^^^^^^^^^^^
+
+
 #### SMTP: SEND MAIL
      Send email using 'smtp.gmail.com' mail server
 
@@ -425,6 +459,54 @@ The quick brown fox jumped over the lazy dogs.
 ____________ Response BODY: ____________
 Downloaded to file /spiflash/tiger.jpg, size=97543
 ^^^^^^^^^^^^ Response BODY: ^^^^^^^^^^^^
+
+#### SFTP DOWNLOAD TEXT FILE
+     Download small text file from SFTP (SSH) server
+* timeout on name lookup is not supported
+*   Trying 195.144.107.198...
+* TCP_NODELAY set
+* Connected to test.rebex.net (195.144.107.198) port 22 (#0)
+* SSH MD5 fingerprint: 0361c498f1ff7d239751071388b8c555
+* SSH authentication methods available: password,keyboard-interactive,publickey
+* Initialized password authentication
+* Authentication complete
+* Closing connection 0
+
+____________ Response BODY: ____________
+Welcome,
+
+you are connected to an FTP or SFTP server used for testing purposes by Rebex FTP/SSL or Rebex SFTP sample code.
+Only read access is allowed and the FTP download speed is limited to 16KBps.
+
+For infomation about Rebex FTP/SSL, Rebex SFTP and other Rebex .NET components, please visit our website at http://www.rebex.net/
+
+For feedback and support, contact support@rebex.net
+
+Thanks!
+
+^^^^^^^^^^^^ Response BODY: ^^^^^^^^^^^^
+     Received file saved to '/spiflash/sftptest.txt' file
+
+
+#### SFTP UPLOAD JPG FILE
+     Upload JPG file to SFTP (SSH) server
+* timeout on name lookup is not supported
+*   Trying 199.71.215.197...
+* TCP_NODELAY set
+* Connected to demo.wftpserver.com (199.71.215.197) port 2222 (#0)
+* SSH MD5 fingerprint: 8c8cbe606d6a2a97008c203e15d36f74
+* SSH authentication methods available: publickey,password
+* Initialized password authentication
+* Authentication complete
+* Upload: sent 36864
+* We are completely uploaded and fine
+* Closing connection 0
+* Upload: sent 97543 B; time=11.2 s; speed=8.5 KB/sec
+
+____________ Response BODY: ____________
+Uploaded file /spiflash/tiger.jpg, size=97543
+^^^^^^^^^^^^ Response BODY: ^^^^^^^^^^^^
+
 
 #### SMTP: SEND MAIL
      Send email using 'smtp.gmail.com' mail server

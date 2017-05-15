@@ -107,6 +107,32 @@ int Curl_POST(char *url, char *hdr, char *body, int hdrlen, int bodylen);
 int Curl_FTP(uint8_t upload, char *url, char *user_pass, char *fname, char *hdr, char *body, int hdrlen, int bodylen);
 
 
+/*
+ * --------------------------------------------------------------------------
+ * int res = Curl_SFTP(upload, url, pass, fname, hdr, body, hdrlen, bodylen);
+ * --------------------------------------------------------------------------
+ *
+ * SFTP operations; DOWNLOAD or UPLOAD file from/to sftp server
+ *
+ * Params:
+ * 		   url:	pointer to server url in format 'sftp:user@<server_name>:port'
+ * 	 	  pass:	pointer to user password in the for the user specified in URL
+ * 		   hdr:	pointer to char buffer to which the received response header or error message will be written
+ * 		  body:	pointer to char buffer to which the received response body or error message will be written
+ *      hdrlen: length of the hdr buffer, must be greather than MIN_HDR_BODY_BUF_LEN
+ *     bodylen: length of the body buffer, must be greather than MIN_HDR_BODY_BUF_LEN
+ * 		 fname: pointer to the file name
+ *              IF NOT NULL && upload=0, LIST or file will be written to the file of that name
+ *              IF upload=1	file of that name will be PUT on the server
+ *
+ * Returns:
+ * 		 res:	0 success, error code on error
+ *
+ */
+//================================================================================================================
+int Curl_SFTP(uint8_t upload, char *url, char *pass, char *fname, char *hdr, char *body, int hdrlen, int bodylen);
+
+
 void Curl_cleanup();
 
 
