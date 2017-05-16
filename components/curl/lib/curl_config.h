@@ -950,6 +950,7 @@
  * mbedTLS internal debugging is filtered from a specified mbedTLS
  * threshold level to esp_log level at runtime:
  *
+ * - 0 - No logging
  * - 1 - Warning
  * - 2 - Info
  * - 3 - Debug
@@ -958,7 +959,7 @@
  * (Note that mbedTLS debug thresholds are not always consistently used.)
  *
 */
-#define MBEDTLS_DEBUG_LEVEL 3
+#define MBEDTLS_DEBUG_LEVEL 1
 
 /* Define to enable metalink support */
 /* #undef USE_METALINK */

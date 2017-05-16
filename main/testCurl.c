@@ -547,7 +547,7 @@ void testCurl(void *taskData) {
 
     // =========================================================================================
     // === Set the variables defining example behaviour ========================================
-    curl_verbose = 1;	// If set to 1 verbose information about curl operations will be printed
+    curl_verbose = 0;	// If set to 1 verbose information about curl operations will be printed
     curl_progress = 5;	// Upload/download progress interval in seconds, set to 0 to disabče
     print_header = 0;	// Print response header if set to 1
     print_body = 1;		// Print response body if set to 1
