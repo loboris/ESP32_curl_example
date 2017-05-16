@@ -61,6 +61,17 @@
 #include "curl_memory.h"
 #include "memdebug.h"
 
+/*
+ *  LoBo
+ *  Eneble mbedtls debuging
+ */
+#include "sdkconfig.h"
+
+#ifdef CONFIG_MBEDTLS_DEBUG
+#include "mbedtls/esp_debug.h" // **LoBo**
+#endif
+
+
 /* apply threading? */
 #if defined(USE_THREADS_POSIX) || defined(USE_THREADS_WIN32)
 #define THREADING_SUPPORT
@@ -364,6 +375,14 @@ mbed_connect_step1(struct connectdata *conn,
   infof(data, "mbedTLS: Connecting to %s:%d\n", hostname, port);
 
   mbedtls_ssl_config_init(&connssl->config);
+
+/*
+ *  LoBo
+ *  Eneble mbedtls debuging
+ */
+#ifdef CONFIG_MBEDTLS_DEBUG
+  mbedtls_esp_enable_debug_log(&connssl->config, MBEDTLS_DEBUG_LEVEL);
+#endif
 
   mbedtls_ssl_init(&connssl->ssl);
   if(mbedtls_ssl_setup(&connssl->ssl, &connssl->config)) {

@@ -944,8 +944,21 @@
 ///#define USE_MANUAL 1
 
 /* if mbedTLS is enabled */
-/* #undef USE_MBEDTLS */
 #define USE_MBEDTLS 1
+/*
+ * Enable mbedTLS debug logging via the esp_log mechanism.
+ * mbedTLS internal debugging is filtered from a specified mbedTLS
+ * threshold level to esp_log level at runtime:
+ *
+ * - 1 - Warning
+ * - 2 - Info
+ * - 3 - Debug
+ * - 4 - Verbose
+ *
+ * (Note that mbedTLS debug thresholds are not always consistently used.)
+ *
+*/
+#define MBEDTLS_DEBUG_LEVEL 3
 
 /* Define to enable metalink support */
 /* #undef USE_METALINK */
