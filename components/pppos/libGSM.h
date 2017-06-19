@@ -7,6 +7,8 @@
 #ifndef _LIBGSM_H_
 #define _LIBGSM_H_
 
+#ifdef CONFIG_EXAMPLE_USE_GSM
+
 #define GSM_STATE_DISCONNECTED	0
 #define GSM_STATE_CONNECTED		1
 #define GSM_STATE_IDLE			89
@@ -106,5 +108,6 @@ void smsRead(SMS_Messages *SMSmesg, int sort);
  */
 int smsDelete(int idx);
 
+#endif
 
 #endif

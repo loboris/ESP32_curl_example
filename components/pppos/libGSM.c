@@ -6,6 +6,9 @@
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
  */
+
+#ifdef CONFIG_EXAMPLE_USE_GSM
+
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -85,8 +88,10 @@ static GSM_Cmd cmd_AT =
 
 static GSM_Cmd cmd_NoSMSInd =
 {
-	.cmd = "AT+CNMI=0,0,0,0,0\r\n",
-	.cmdSize = sizeof("AT+CNMI=0,0,0,0,0\r\n")-1,
+	//.cmd = "AT+CNMI=0,0,0,0,0\r\n",
+	//.cmdSize = sizeof("AT+CNMI=0,0,0,0,0\r\n")-1,
+	.cmd = "AT+CNMI=0\r\n",
+	.cmdSize = sizeof("AT+CNMI=0\r\n")-1,
 	.cmdResponseOnOk = GSM_OK_Str,
 	.timeoutMs = 1000,
 	.delayMs = 0,
@@ -105,8 +110,8 @@ static GSM_Cmd cmd_Reset =
 
 static GSM_Cmd cmd_RFOn =
 {
-	.cmd = "AT+CFUN=1\r\n",
-	.cmdSize = sizeof("ATCFUN=1,0\r\n")-1,
+	.cmd = "ATE0+CFUN=1\r\n",
+	.cmdSize = sizeof("ATE0CFUN=1,0\r\n")-1,
 	.cmdResponseOnOk = GSM_OK_Str,
 	.timeoutMs = 10000,
 	.delayMs = 1000,
@@ -125,8 +130,8 @@ static GSM_Cmd cmd_EchoOff =
 
 static GSM_Cmd cmd_Pin =
 {
-	.cmd = "AT+CPIN?\r\n",
-	.cmdSize = sizeof("AT+CPIN?\r\n")-1,
+	.cmd = "ATE0+CPIN?\r\n",
+	.cmdSize = sizeof("ATE0+CPIN?\r\n")-1,
 	.cmdResponseOnOk = "CPIN: READY",
 	.timeoutMs = 5000,
 	.delayMs = 0,
@@ -135,8 +140,8 @@ static GSM_Cmd cmd_Pin =
 
 static GSM_Cmd cmd_Reg =
 {
-	.cmd = "AT+CREG?\r\n",
-	.cmdSize = sizeof("AT+CREG?\r\n")-1,
+	.cmd = "ATE0+CREG?\r\n",
+	.cmdSize = sizeof("ATE0+CREG?\r\n")-1,
 	.cmdResponseOnOk = "CREG: 0,1",
 	.timeoutMs = 3000,
 	.delayMs = 10000,
@@ -171,9 +176,9 @@ static GSM_Cmd *GSM_Init[] =
 		&cmd_Reset,
 		&cmd_EchoOff,
 		&cmd_RFOn,
-		&cmd_NoSMSInd,
 		&cmd_Pin,
 		&cmd_Reg,
+		&cmd_NoSMSInd,
 		&cmd_APN,
 		&cmd_Connect,
 };
@@ -703,7 +708,7 @@ static void pppos_client_task()
 
 exit:
 	if (data) free(data);  // free data buffer
-	ppp_free(ppp);
+	if (ppp) ppp_free(ppp);
 
 	xSemaphoreTake(pppos_mutex, PPPOSMUTEX_TIMEOUT);
 	pppos_task_started = 0;
@@ -1106,3 +1111,4 @@ int smsDelete(int idx)
 	return atCmd_waitResponse(buf, GSM_OK_Str, NULL, -1, 5000, NULL, 0);
 }
 
+#endif

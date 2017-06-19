@@ -2,7 +2,9 @@
 
 #include "sdkconfig.h"
 
-#define USE_GSM EXAMPLE_USE_GSM
+#ifdef CONFIG_EXAMPLE_USE_GSM
+#define USE_GSM
+#endif
 
 #include "freertos/FreeRTOS.h"
 
@@ -390,7 +392,6 @@ static void testFTP()
 
     vTaskDelay(1000 / portTICK_RATE_MS);
 
-#ifndef USE_GSM
 	exists = check_file("/spiflash/tiger.jpg");
 	printf("\r\n\r\n#### FTP GET JPG FILE\r\n");
     printf("     Get JPG file (~95 KB) from FTP server");
@@ -405,6 +406,7 @@ static void testFTP()
 	print_response(hdrbuf, bodybuf,res);
 	if (res) goto exit;
 
+#ifndef USE_GSM
 	exists = check_file("/spiflash/tiger.jpg");
     if (exists == 1) {
 		printf("\r\n\r\n#### FTP PUT JPG FILE\r\n");
@@ -636,7 +638,7 @@ void testCurl(void *taskData) {
 
     // =========================================================================================
     // === Set the variables defining example behavior =========================================
-    curl_verbose = 0;	// If set to 1 verbose information about curl operations will be printed
+    curl_verbose = 1;	// If set to 1 verbose information about curl operations will be printed
     curl_progress = 5;	// Upload/download progress interval in seconds, set to 0 to disable
     print_header = 0;	// Print response header if set to 1
     print_body = 1;		// Print response body if set to 1
