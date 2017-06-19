@@ -652,8 +652,7 @@ void testCurl(void *taskData) {
     uint32_t npass = 0;
     uint8_t sendmail = 1;
     while (1) {
-    	//sendmail = (npass % 10);
-    	sendmail = 0;
+    	sendmail = (npass % 10);
     	print_pass(++npass);
 
 
