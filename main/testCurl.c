@@ -1,5 +1,8 @@
 
 
+#include "sdkconfig.h"
+
+#define USE_GSM EXAMPLE_USE_GSM
 
 #include "freertos/FreeRTOS.h"
 
@@ -19,15 +22,20 @@
 #include "nvs_flash.h"
 #include "nvs.h"
 #include <string.h>
-#include "sdkconfig.h"
+
+#ifdef USE_GSM
+#include "libGSM.h"
+#include "apps/sntp/sntp.h"
+#else
+#define SSID CONFIG_WIFI_SSID
+#define PASSWORD CONFIG_WIFI_PASSWORD
+#endif
+
 
 #undef DISABLE_SSH_AGENT
 
-// =====================================
-// === Set your WiFi SSID & password
-#define SSID CONFIG_WIFI_SSID
-#define PASSWORD CONFIG_WIFI_PASSWORD
-// =====================================
+
+static const char *TIME_TAG = "[SNTP]";
 
 // ========================================================================================================================
 // === Mail server, set different if needed
@@ -61,7 +69,8 @@ static char Get_bigfile_testURL[] = "http://loboris.eu/ESP32/bigimg.jpg";
 static char Get_testURL_SSL[] = "https://www-eng-x.llnl.gov/documents/a_document.txt";
 //static char Get_testURL_SSL[] = "https://google.com";
 
-static char Post_testURL[] = "http://loboris.eu/ESP32/test.php";
+//static char Post_testURL[] = "http://loboris.eu/ESP32/test.php";
+static char Post_testURL[] = "https://amp.dhz.hr/test/test.php";
 
 static char Ftp_testURL[] = "ftp://loboris.eu";
 static char Ftp_user_pass[] = "esp32:esp32user";
@@ -98,6 +107,62 @@ static wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
 // Mount path for the partition
 const char *base_path = "/spiflash";
 
+
+#ifdef USE_GSM
+//--------------------------
+static int doPPPoS_Connect()
+{
+	if (ppposInit() == 0) return 0;
+
+	// wait for time to be set
+	time_t now = 0;
+	struct tm timeinfo = { 0 };
+	int retry = 0;
+	const int retry_count = 10;
+
+	time(&now);
+	localtime_r(&now, &timeinfo);
+	if (timeinfo.tm_year >= (2017 - 1900)) return 1;
+
+	while (1) {
+		ESP_LOGI(TIME_TAG,"OBTAINING TIME");
+	    ESP_LOGI(TIME_TAG, "Initializing SNTP");
+	    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+	    sntp_setservername(0, "pool.ntp.org");
+	    sntp_init();
+		ESP_LOGI(TIME_TAG,"SNTP INITIALIZED");
+
+		// wait for time to be set
+		now = 0;
+		while(timeinfo.tm_year < (2016 - 1900) && ++retry < retry_count) {
+			ESP_LOGI(TIME_TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
+			vTaskDelay(2000 / portTICK_PERIOD_MS);
+			time(&now);
+			localtime_r(&now, &timeinfo);
+			if (ppposStatus() != GSM_STATE_CONNECTED) break;
+		}
+		if (ppposStatus() != GSM_STATE_CONNECTED) {
+			sntp_stop();
+			while (ppposStatus() != GSM_STATE_CONNECTED) {
+				vTaskDelay(10 / portTICK_RATE_MS);
+			}
+			continue;
+		}
+
+		if (retry < retry_count) {
+			ESP_LOGI(TIME_TAG, "TIME SET TO %s", asctime(&timeinfo));
+			break;
+		}
+		else {
+			ESP_LOGI(TIME_TAG, "ERROR OBTAINING TIME\n");
+		}
+		sntp_stop();
+		break;
+		vTaskDelay(30000 / portTICK_PERIOD_MS);
+	}
+	return 1;
+}
+#endif
 
 
 // Print some info about curl environment
@@ -196,6 +261,7 @@ static void testGET()
 	if (res) goto exit;
     vTaskDelay(2000 / portTICK_RATE_MS);
 
+#ifndef USE_GSM
 	printf("\r\n\r\n#### HTTP GET FILE\r\n");
 	printf("     Get file (~225 KB) from http server");
 
@@ -227,6 +293,7 @@ static void testGET()
 
 	curl_timeout = tmo;
 	curl_maxbytes = maxb;
+#endif
 
 exit:
     free(bodybuf);
@@ -323,6 +390,7 @@ static void testFTP()
 
     vTaskDelay(1000 / portTICK_RATE_MS);
 
+#ifndef USE_GSM
 	exists = check_file("/spiflash/tiger.jpg");
 	printf("\r\n\r\n#### FTP GET JPG FILE\r\n");
     printf("     Get JPG file (~95 KB) from FTP server");
@@ -350,6 +418,12 @@ static void testFTP()
 
 		res = Curl_FTP(1, Ftp_puttextfile_testURL, Ftp_user_pass, SIMULATE_FS, hdrbuf, bodybuf, 1024, 4096);
     }
+#else
+	printf("\r\n\r\n#### FTP PUT TEXT FILE\r\n");
+    printf("     Upload text file to FTP server, simulate reading from file system\r\n");
+
+	res = Curl_FTP(1, Ftp_puttextfile_testURL, Ftp_user_pass, SIMULATE_FS, hdrbuf, bodybuf, 1024, 4096);
+#endif
 	print_response(hdrbuf, bodybuf,res);
 
 exit:
@@ -387,19 +461,29 @@ static void testSFTP()
 	}
     vTaskDelay(2000 / portTICK_RATE_MS);
 
+    char sftp_url[256];
+    sprintf(sftp_url, "%s.%d", SFtp_putfile_testURL, rand());
+
+#ifndef USE_GSM
 	exists = check_file("/spiflash/tiger.jpg");
     if (exists == 1) {
 		printf("\r\n\r\n#### SFTP UPLOAD JPG FILE\r\n");
 	    printf("     Upload JPG file to SFTP (SSH) server\r\n");
 
-		res = Curl_SFTP(1, SFtp_putfile_testURL, SFtp_pass2, "/spiflash/tiger.jpg", hdrbuf, bodybuf, 1024, 4096);
+		res = Curl_SFTP(1, sftp_url, SFtp_pass2, "/spiflash/tiger.jpg", hdrbuf, bodybuf, 1024, 4096);
     }
     else {
 		printf("\r\n\r\n#### SFTP UPLOAD TEXT FILE\r\n");
 	    printf("     Upload text file to SFTP (SSH) server, simulate reading from file system\r\n");
 
-		res = Curl_SFTP(1, SFtp_putfile_testURL, SFtp_pass2, SIMULATE_FS, hdrbuf, bodybuf, 1024, 4096);
+		res = Curl_SFTP(1, sftp_url, SFtp_pass2, SIMULATE_FS, hdrbuf, bodybuf, 1024, 4096);
     }
+#else
+	printf("\r\n\r\n#### SFTP UPLOAD TEXT FILE\r\n");
+    printf("     Upload text file to SFTP (SSH) server, simulate reading from file system\r\n");
+
+	res = Curl_SFTP(1, sftp_url, SFtp_pass2, SIMULATE_FS, hdrbuf, bodybuf, 1024, 4096);
+#endif
 	print_response(hdrbuf, bodybuf,res);
 
     free(bodybuf);
@@ -432,6 +516,7 @@ static void testSMTP(uint8_t dosend) {
 	// set mail body
 	quickmail_set_body(mailobj, mail_msg);
 
+#ifndef USE_GSM
 	// Add file attachment
 	int exists = check_file("/spiflash/tiger.jpg");
 	if (exists == 1) quickmail_add_attachment_file(mailobj, "/spiflash/tiger.jpg", NULL);
@@ -440,6 +525,10 @@ static void testSMTP(uint8_t dosend) {
 		// Add text attachment
 		quickmail_add_body_memory(mailobj, "text/html", mail_attach, strlen(mail_attach), 0);
 	}
+#else
+	// Add text attachment
+	quickmail_add_body_memory(mailobj, "text/html", mail_attach, strlen(mail_attach), 0);
+#endif
 
 	// set some options
 	quickmail_add_header(mailobj, "Importance: Low");
@@ -546,12 +635,16 @@ void testCurl(void *taskData) {
     }
 
     // =========================================================================================
-    // === Set the variables defining example behaviour ========================================
+    // === Set the variables defining example behavior =========================================
     curl_verbose = 0;	// If set to 1 verbose information about curl operations will be printed
-    curl_progress = 5;	// Upload/download progress interval in seconds, set to 0 to disabče
+    curl_progress = 5;	// Upload/download progress interval in seconds, set to 0 to disable
     print_header = 0;	// Print response header if set to 1
     print_body = 1;		// Print response body if set to 1
+#ifdef USE_GSM
+    curl_timeout = 90;	// curl operations timeout
+#else
     curl_timeout = 20;	// curl operations timeout
+#endif
     // =========================================================================================
 
     num_errors = 0;
@@ -559,9 +652,14 @@ void testCurl(void *taskData) {
     uint32_t npass = 0;
     uint8_t sendmail = 1;
     while (1) {
-    	sendmail = (npass % 10);
+    	//sendmail = (npass % 10);
+    	sendmail = 0;
     	print_pass(++npass);
 
+
+#ifdef USE_GSM
+		if (ppposStatus() == GSM_STATE_CONNECTED) {
+#endif
 		testGET();
 		if (num_errors > 5) break;
 
@@ -580,6 +678,30 @@ void testCurl(void *taskData) {
 		testSMTP(sendmail);
 		if (num_errors > 5) break;
 
+#ifdef USE_GSM
+		}
+
+		uint32_t rx_count, tx_count;
+
+		#ifdef CONFIG_GSM_DISCONNECT_AFTER
+		ppposDisconnect(0, 1);
+		#endif
+		getRxTxCount(&rx_count, &tx_count, 1);
+		printf("\r\n==== Received: %u, Sent: %u, Total: %u ====\r\n\n", rx_count, tx_count, rx_count+tx_count);
+
+		int nwait = CONFIG_GSM_EXAMPLE_RUN_INTERVAL;
+	    printf("\r\n");
+	    while (1) {
+			while (nwait > 0) {
+				printf("Waiting %d seconds...   \r", nwait);
+				fflush(stdout);
+				vTaskDelay(1000 / portTICK_RATE_MS);
+				nwait--;
+			}
+			printf("\n");
+			if (doPPPoS_Connect() == 1) break;
+	    }
+#else
 	    int nwait = 60;
 	    printf("\r\n");
 	    while (nwait > 0) {
@@ -588,6 +710,7 @@ void testCurl(void *taskData) {
 	    	vTaskDelay(1000 / portTICK_RATE_MS);
 	    	nwait--;
 	    }
+#endif
     }
 
 	_restarting = 1;
@@ -690,11 +813,12 @@ int app_main(void)
 			}
 		}
     }
-    tcpip_adapter_init();
-
 	mount_fs();
 	vTaskDelay(1000 / portTICK_RATE_MS);
 
+	tcpip_adapter_init();
+
+#ifndef USE_GSM
 	ESP_ERROR_CHECK( esp_event_loop_init(wifi_event_handler, NULL) );
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
@@ -711,6 +835,19 @@ int app_main(void)
     ESP_ERROR_CHECK( esp_wifi_start() );
     ESP_ERROR_CHECK( esp_wifi_connect() );
     ESP_ERROR_CHECK( esp_wifi_set_ps(WIFI_PS_NONE) );
+#else
+	if (doPPPoS_Connect() == 0) {
+		ESP_LOGE(tag, "ERROR: GSM not initialized.");
+		while (1) {
+			vTaskDelay(1000 / portTICK_RATE_MS);
+		}
+	}
+
+	if (thread_started == 0) {
+		xTaskCreatePinnedToCore(&testCurl, "testCurl", 10*1024, NULL, 5, NULL, tskNO_AFFINITY);
+		thread_started = 1;
+	}
+#endif
 
     return 0;
 }

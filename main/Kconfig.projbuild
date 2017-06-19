@@ -1,16 +1,91 @@
 menu "Curl Example Configuration"
 
+config EXAMPLE_USE_GSM
+    bool "Use GSM"
+    default n
+    help
+        Use GSM Module & PPPoS to connect to Internet
+        If not selected, WiFi will be used
+
+config GSM_DEBUG
+    bool "Enable GSM debugging"
+   	depends on EXAMPLE_USE_GSM
+    default n
+    help
+        Show GSM debug messages
+
 config WIFI_SSID
     string "WiFi SSID"
+   	depends on !EXAMPLE_USE_GSM
     default "myssid"
     help
 	SSID (network name) for the example to connect to.
 
 config WIFI_PASSWORD
     string "WiFi Password"
+   	depends on !EXAMPLE_USE_GSM
     default "mypassword"
     help
 	WiFi password (WPA or WPA2) for the example to use.
+
+config GSM_TX
+    int "UART Output to GSM Module"
+   	depends on EXAMPLE_USE_GSM
+    default 21
+    range 1 30
+    help
+	UART Tx pin, connected to GSM Module Rx pin.
+
+config GSM_RX
+    int "UART Input from GSM Module"
+   	depends on EXAMPLE_USE_GSM
+    default 31
+    range 1 38
+    help
+	UART Rx pin, connected to GSM Module Tx pin.
+
+config GSM_BDRATE
+    int "UART Baud rate"
+   	depends on EXAMPLE_USE_GSM
+    default 115200
+    help
+	UART baudrate to comunicate with GSM module
+
+config GSM_INTERNET_USER
+    string "Internet User"
+   	depends on EXAMPLE_USE_GSM
+	default ""
+	help
+		Network provider internet user.
+
+config GSM_INTERNET_PASSWORD
+    string "Internet password"
+   	depends on EXAMPLE_USE_GSM
+	default ""
+	help
+		Network provider internet password
+		
+config GSM_APN
+    string "Internet APN"
+   	depends on EXAMPLE_USE_GSM
+    default "providerAPN"
+    help
+       Network provider's APN for internet access
+
+config GSM_DISCONNECT_AFTER
+    bool "Disconnect after operation"
+   	depends on EXAMPLE_USE_GSM
+    default n
+    help
+        Disconnect GSM from Internet after all tests are done
+
+config GSM_EXAMPLE_RUN_INTERVAL
+    int "Example run interval"
+   	depends on EXAMPLE_USE_GSM
+    default 90
+    range 60 3600
+    help
+	Interval between runs in seconds
 
 config MAIL_SERVER
     string "Mail server"

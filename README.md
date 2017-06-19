@@ -6,6 +6,10 @@ Includes examples of using **http**/**https** GET & POST, **ftp** LIST, GET, PUT
 
 The example uses **wear leveling FAT file system** and the latest **esp-idf** commit has to be used (5. May 2017 or later)
 
+Included **libGSM** to test libCurl with GSM modems
+
+For more info on using **GSM modules** see my [PPPoE Example repository](https://github.com/loboris/ESP32-PPPOS-EXAMPLE)
+
 ---
 
 #### How to build
@@ -18,7 +22,7 @@ Clone the repository
 
 Execute menuconfig and configure your Serial flash config and other settings. Included *sdkconfig.defaults* sets some defaults to be used. **Custom partitions table is used!**
 
-Navigate to **Curl Example Configuration** and set your WiFi SSID and password, mail account user name and password, email recipient's mail address
+Navigate to **Curl Example Configuration** and set your WiFi SSID and password, mail account user name and password, email recipient's mail address. If using **GSM module**, configure GSM parameters.
 
 `make menuconfig`
 

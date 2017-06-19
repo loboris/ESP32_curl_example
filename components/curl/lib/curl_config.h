@@ -959,7 +959,7 @@
  * (Note that mbedTLS debug thresholds are not always consistently used.)
  *
 */
-#define MBEDTLS_DEBUG_LEVEL 1
+#define MBEDTLS_DEBUG_LEVEL 2
 
 /* Define to enable metalink support */
 /* #undef USE_METALINK */
