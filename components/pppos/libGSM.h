@@ -7,6 +7,8 @@
 #ifndef _LIBGSM_H_
 #define _LIBGSM_H_
 
+#include "sdkconfig.h"
+
 #ifdef CONFIG_EXAMPLE_USE_GSM
 
 #define GSM_STATE_DISCONNECTED	0

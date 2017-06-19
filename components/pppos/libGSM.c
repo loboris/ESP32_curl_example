@@ -7,6 +7,8 @@
    CONDITIONS OF ANY KIND, either express or implied.
  */
 
+#include "sdkconfig.h"
+
 #ifdef CONFIG_EXAMPLE_USE_GSM
 
 #include <string.h>
