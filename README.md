@@ -6,9 +6,15 @@ Includes examples of using **http**/**https** GET & POST, **ftp** LIST, GET, PUT
 
 The example uses **wear leveling FAT file system** and the latest **esp-idf** commit has to be used (5. May 2017 or later)
 
+---
+
 Included **libGSM** to test libCurl with GSM modems
 
 For more info on using **GSM modules** see my [PPPoE Example repository](https://github.com/loboris/ESP32-PPPOS-EXAMPLE)
+
+If using **GSM/PPPoS** with latest esp-idf (e6afe28bafe5db5ab79fae213f2e8e1ccd9f937c or later) a patch for **components/lwip/api/pppapi.c** is need.
+
+Use included **pppapi.c.patch** to patch the file or copy **pppapi.c.patched** to **components/lwip/api/** as **pppapi.c**
 
 ---
 

@@ -1,6 +1,9 @@
 /* lib/curl_config.h.  Generated from curl_config.h.in by configure.  */
 /* lib/curl_config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* to disable NTLM authentication */
+#define CURL_DISABLE_NTLM 1
+
 /* Location of default ca bundle */
 #define CURL_CA_BUNDLE "/certs/ca-certificates.crt"
 
@@ -799,7 +802,7 @@
 //#define NTLM_WB_ENABLED 1
 
 /* Define absolute filename for winbind's ntlm_auth helper. */
-#define NTLM_WB_FILE "/usr/bin/ntlm_auth"
+//#define NTLM_WB_FILE "/usr/bin/ntlm_auth"
 
 /* cpu-machine-OS */
 #define OS "ESP32"
