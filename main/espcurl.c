@@ -157,7 +157,10 @@ static curl_socket_t opensocket_callback(void *clientp, curlsocktype purpose, st
 // Set some common curl options
 //----------------------------------------------
 static void _set_default_options(CURL *handle) {
-	curl_easy_setopt(handle, CURLOPT_VERBOSE, curl_verbose);
+
+    //curl_easy_setopt(handle, CURLOPT_TCP_NODELAY, 0L);
+
+    curl_easy_setopt(handle, CURLOPT_VERBOSE, curl_verbose);
 
 	// ** Set SSL Options
 	curl_easy_setopt(handle, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -195,7 +198,6 @@ static void _set_default_options(CURL *handle) {
     curl_easy_setopt(handle, CURLOPT_CLOSESOCKETDATA, NULL);
     curl_easy_setopt(handle, CURLOPT_OPENSOCKETFUNCTION, opensocket_callback);
     curl_easy_setopt(handle, CURLOPT_OPENSOCKETDATA, NULL);
-
 }
 
 //==================================================================================
