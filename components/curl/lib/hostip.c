@@ -25,6 +25,9 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
+#ifdef HAVE_NETINET_IN6_H
+#include <netinet/in6.h>
+#endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
@@ -304,9 +307,9 @@ fetch_addr(struct connectdata *conn,
   entry_len = strlen(entry_id);
 
   /* See if its already in our dns cache */
-  dns = Curl_hash_pick(data->dns.hostcache, entry_id, entry_len+1);
+  dns = Curl_hash_pick(data->dns.hostcache, entry_id, entry_len + 1);
 
-  if(dns && (data->set.dns_cache_timeout != -1))  {
+  if(dns && (data->set.dns_cache_timeout != -1)) {
     /* See whether the returned entry is stale. Done before we release lock */
     struct hostcache_prune_data user;
 
@@ -316,7 +319,7 @@ fetch_addr(struct connectdata *conn,
     if(hostcache_timestamp_remove(&user, dns)) {
       infof(data, "Hostname in DNS cache was stale, zapped\n");
       dns = NULL; /* the memory deallocation is being handled by the hash */
-      Curl_hash_delete(data->dns.hostcache, entry_id, entry_len+1);
+      Curl_hash_delete(data->dns.hostcache, entry_id, entry_len + 1);
     }
   }
 
@@ -403,7 +406,7 @@ Curl_cache_addr(struct Curl_easy *data,
     dns->timestamp = 1;   /* zero indicates CURLOPT_RESOLVE entry */
 
   /* Store the resolved data in our DNS cache. */
-  dns2 = Curl_hash_add(data->dns.hostcache, entry_id, entry_len+1,
+  dns2 = Curl_hash_add(data->dns.hostcache, entry_id, entry_len + 1,
                        (void *)dns);
   if(!dns2) {
     free(dns);
@@ -596,7 +599,7 @@ int Curl_resolv_timeout(struct connectdata *conn,
     /* Ignore the timeout when signals are disabled */
     timeout = 0;
   else
-    timeout = timeoutms;
+    timeout = (timeoutms > LONG_MAX) ? LONG_MAX : (long)timeoutms;
 
   if(!timeout)
     /* USE_ALARM_TIMEOUT defined, but no timeout actually requested */
@@ -688,10 +691,11 @@ clean_up:
      the time we spent until now! */
   if(prev_alarm) {
     /* there was an alarm() set before us, now put it back */
-    unsigned long elapsed_ms = Curl_tvdiff(Curl_tvnow(), conn->created);
+    timediff_t elapsed_secs = Curl_timediff(Curl_now(),
+                                            conn->created) / 1000;
 
     /* the alarm period is counted in even number of seconds */
-    unsigned long alarm_set = prev_alarm - elapsed_ms/1000;
+    unsigned long alarm_set = prev_alarm - elapsed_secs;
 
     if(!alarm_set ||
        ((alarm_set >= 0x80000000) && (prev_alarm < 0x80000000)) ) {
@@ -777,7 +781,6 @@ CURLcode Curl_loadhostpairs(struct Curl_easy *data)
 {
   struct curl_slist *hostp;
   char hostname[256];
-  char address[256];
   int port;
 
   for(hostp = data->change.resolve; hostp; hostp = hostp->next) {
@@ -806,7 +809,7 @@ CURLcode Curl_loadhostpairs(struct Curl_easy *data)
         Curl_share_lock(data, CURL_LOCK_DATA_DNS, CURL_LOCK_ACCESS_SINGLE);
 
       /* delete entry, ignore if it didn't exist */
-      Curl_hash_delete(data->dns.hostcache, entry_id, entry_len+1);
+      Curl_hash_delete(data->dns.hostcache, entry_id, entry_len + 1);
 
       if(data->share)
         Curl_share_unlock(data, CURL_LOCK_DATA_DNS);
@@ -819,12 +822,24 @@ CURLcode Curl_loadhostpairs(struct Curl_easy *data)
       Curl_addrinfo *addr;
       char *entry_id;
       size_t entry_len;
+      char buffer[256];
+      char *address = &buffer[0];
 
       if(3 != sscanf(hostp->data, "%255[^:]:%d:%255s", hostname, &port,
                      address)) {
         infof(data, "Couldn't parse CURLOPT_RESOLVE entry '%s'!\n",
               hostp->data);
         continue;
+      }
+
+      /* allow IP(v6) address within [brackets] */
+      if(address[0] == '[') {
+        size_t alen = strlen(address);
+        if(address[alen-1] != ']')
+          /* it needs to also end with ] to be valid */
+          continue;
+        address[alen-1] = 0; /* zero terminate there */
+        address++; /* pass the open bracket */
       }
 
       addr = Curl_str2addr(address, port);
@@ -847,7 +862,7 @@ CURLcode Curl_loadhostpairs(struct Curl_easy *data)
         Curl_share_lock(data, CURL_LOCK_DATA_DNS, CURL_LOCK_ACCESS_SINGLE);
 
       /* See if its already in our dns cache */
-      dns = Curl_hash_pick(data->dns.hostcache, entry_id, entry_len+1);
+      dns = Curl_hash_pick(data->dns.hostcache, entry_id, entry_len + 1);
 
       /* free the allocated entry_id again */
       free(entry_id);
@@ -862,9 +877,12 @@ CURLcode Curl_loadhostpairs(struct Curl_easy *data)
           dns->inuse--;
         }
       }
-      else
+      else {
         /* this is a duplicate, free it again */
+        infof(data, "RESOLVE %s:%d is already cached, %s not stored!\n",
+              hostname, port, address);
         Curl_freeaddrinfo(addr);
+      }
 
       if(data->share)
         Curl_share_unlock(data, CURL_LOCK_DATA_DNS);

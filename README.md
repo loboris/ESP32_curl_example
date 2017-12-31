@@ -12,10 +12,6 @@ Included **libGSM** to test libCurl with GSM modems
 
 For more info on using **GSM modules** see my [PPPoE Example repository](https://github.com/loboris/ESP32-PPPOS-EXAMPLE)
 
-If using **GSM/PPPoS** with latest esp-idf (e6afe28bafe5db5ab79fae213f2e8e1ccd9f937c or later) a patch for **components/lwip/api/pppapi.c** is need.
-
-Use included **pppapi.c.patch** to patch the file or copy **pppapi.c.patched** to **components/lwip/api/** as **pppapi.c**
-
 ---
 
 #### How to build

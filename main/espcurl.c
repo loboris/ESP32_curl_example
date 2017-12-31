@@ -491,7 +491,7 @@ static int _Curl_FTP(uint8_t upload, char *url, char *user_pass, char *fname, ch
         // enable uploading
         curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 
-	    if (fsize > 0) curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE, (long)fsize);
+	    if (fsize > 0) curl_easy_setopt(curl, CURLOPT_INFILESIZE, (long)fsize);
     }
     else {
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWrite);

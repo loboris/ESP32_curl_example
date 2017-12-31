@@ -344,7 +344,6 @@ aes_ctr_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     aes_ctr_ctx *c = EVP_CIPHER_CTX_get_app_data(ctx);
     unsigned char b1[AES_BLOCK_SIZE];
-    size_t i = 0;
     int outlen = 0;
 
     if (inl != 16) /* libssh2 only ever encrypt one block */
@@ -1056,14 +1055,7 @@ _libssh2_pub_priv_keyfile(LIBSSH2_SESSION *session,
                               "Unable to extract public key from private key "
                               "file: Unable to open private key file");
     }
-    if (!EVP_get_cipherbyname("des")) {
-        /* If this cipher isn't loaded it's a pretty good indication that none
-         * are.  I have *NO DOUBT* that there's a better way to deal with this
-         * ($#&%#$(%$#( Someone buy me an OpenSSL manual and I'll read up on
-         * it.
-         */
-        OpenSSL_add_all_ciphers();
-    }
+
     BIO_reset(bp);
     pk = PEM_read_bio_PrivateKey(bp, NULL, NULL, (void*)passphrase);
     BIO_free(bp);
@@ -1132,14 +1124,7 @@ _libssh2_pub_priv_keyfilememory(LIBSSH2_SESSION *session,
     if (!bp) {
         return -1;
     }
-    if (!EVP_get_cipherbyname("des")) {
-        /* If this cipher isn't loaded it's a pretty good indication that none
-         * are.  I have *NO DOUBT* that there's a better way to deal with this
-         * ($#&%#$(%$#( Someone buy me an OpenSSL manual and I'll read up on
-         * it.
-         */
-        OpenSSL_add_all_ciphers();
-    }
+
     BIO_reset(bp);
     pk = PEM_read_bio_PrivateKey(bp, NULL, NULL, (void*)passphrase);
     BIO_free(bp);

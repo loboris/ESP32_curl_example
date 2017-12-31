@@ -27,6 +27,9 @@
 #ifdef HAVE_NETINET_IN_H
 #  include <netinet/in.h>
 #endif
+#ifdef HAVE_NETINET_IN6_H
+#  include <netinet/in6.h>
+#endif
 #ifdef HAVE_NETDB_H
 #  include <netdb.h>
 #endif
@@ -286,7 +289,7 @@ Curl_he2ai(const struct hostent *he, int port)
 
   DEBUGASSERT((he->h_name != NULL) && (he->h_addr_list != NULL));
 
-  for(i=0; (curr = he->h_addr_list[i]) != NULL; i++) {
+  for(i = 0; (curr = he->h_addr_list[i]) != NULL; i++) {
 
     size_t ss_size;
 #ifdef ENABLE_IPV6
@@ -570,9 +573,9 @@ curl_dogetaddrinfo(const char *hostname,
                    int line, const char *source)
 {
 #ifdef USE_LWIPSOCK
-  int res=lwip_getaddrinfo(hostname, service, hints, result);
+  int res = lwip_getaddrinfo(hostname, service, hints, result);
 #else
-  int res=(getaddrinfo)(hostname, service, hints, result);
+  int res = (getaddrinfo)(hostname, service, hints, result);
 #endif
   if(0 == res)
     /* success */
